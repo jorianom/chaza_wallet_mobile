@@ -1,4 +1,4 @@
-import 'package:chaza_wallet/presentation/screens/counter_screen.dart';
+// import 'package:chaza_wallet/presentation/screens/counter_screen.dart';
 import 'package:chaza_wallet/presentation/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -15,6 +15,6 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.blue),
-        home: const CounterScreen());
+        home: const LoginForm());
   }
 }
