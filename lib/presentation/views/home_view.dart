@@ -1,3 +1,4 @@
+import 'package:chaza_wallet/presentation/screens/send_screen.dart';
 import 'package:flutter/material.dart';
 
 class HomeView extends StatelessWidget {
@@ -58,7 +59,10 @@ class Buttons extends StatelessWidget {
                 color: Colors.blueAccent,
                 icon: const Icon(Icons.import_export, size: 40),
                 onPressed: () {
-                  // print('Retiro presionado');
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (BuildContext contex) => SendScreen()));
                 },
               ),
               const Text('Enviar'),
