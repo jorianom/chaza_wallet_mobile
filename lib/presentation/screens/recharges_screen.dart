@@ -1,3 +1,8 @@
+import 'dart:convert';
+
+import 'package:chaza_wallet/infraestructure/models/methods.dart';
+import 'package:chaza_wallet/presentation/screens/methods_screen.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -31,6 +36,23 @@ class FormRecharges extends StatefulWidget {
 }
 
 class _FormRechargesState extends State<FormRecharges> {
+  Methods? methods;
+
+  @override
+  void initState() {
+    super.initState();
+    getMethods();
+  }
+
+  Future<void> getMethods() async {
+    final response = await Dio().get(
+        "https://go-recharges-ms-yerq2evawq-uc.a.run.app/api/methods/9746498");
+    var data = jsonDecode(response.data);
+    methods = Methods.fromJson(data);
+    // print(methods?.message);
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     String? dropdownValue;
@@ -41,6 +63,7 @@ class _FormRechargesState extends State<FormRecharges> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Text(methods?.status.toString() ?? "null"),
             const SizedBox(height: 15),
             TextFormField(
               textAlign: TextAlign.center,
@@ -58,16 +81,30 @@ class _FormRechargesState extends State<FormRecharges> {
             DropdownButtonFormField<String>(
               value: dropdownValue,
               hint: const Text('Selecciona tu metodo de recarga'),
-              items: list
-                  .map(
-                      (e) => DropdownMenuItem<String>(value: e, child: Text(e)))
-                  .toList(),
+              items: methods?.data
+                      ?.map((e) => DropdownMenuItem<String>(
+                          value: e.id, child: Text(e.name.toString())))
+                      .toList() ??
+                  [],
               onChanged: (String? value) {
                 setState(() {
                   dropdownValue = value!;
                 });
-                print(dropdownValue);
               },
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (BuildContext contex) =>
+                                  const MethodsScreen()));
+                    },
+                    child: const Text("Agregar otro metodo de recarga"))
+              ],
             ),
             const SizedBox(height: 10),
             SizedBox(
