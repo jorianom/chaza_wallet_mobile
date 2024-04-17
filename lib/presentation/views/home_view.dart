@@ -1,3 +1,4 @@
+import 'package:chaza_wallet/presentation/screens/recharges_screen.dart';
 import 'package:chaza_wallet/presentation/screens/send_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -62,7 +63,8 @@ class Buttons extends StatelessWidget {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (BuildContext contex) => SendScreen()));
+                          builder: (BuildContext contex) =>
+                              const SendScreen()));
                 },
               ),
               const Text('Enviar'),
@@ -86,7 +88,11 @@ class Buttons extends StatelessWidget {
                 color: Colors.blueAccent,
                 icon: const Icon(Icons.add_card, size: 40),
                 onPressed: () {
-                  // print('Retiro presionado');
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (BuildContext contex) =>
+                              const RechargesScreen()));
                 },
               ),
               const Text('Recargas'),
