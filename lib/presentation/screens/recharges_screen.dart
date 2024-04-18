@@ -45,12 +45,48 @@ class _FormRechargesState extends State<FormRecharges> {
   }
 
   Future<void> getMethods() async {
-    final response = await Dio().get(
-        "https://go-recharges-ms-yerq2evawq-uc.a.run.app/api/methods/9746498");
-    var data = jsonDecode(response.data);
-    methods = Methods.fromJson(data);
-    // print(methods?.message);
+    final response = await Dio()
+        .post("https://chaza-wallet-ag-ithgocyoua-uc.a.run.app/graphql", data: {
+      'query': '''
+            {
+                getMethods(id: 9746498) {
+                    id
+                    name
+                }
+            }
+          '''
+    });
+    methods = Methods.fromJson(response.data);
     setState(() {});
+  }
+
+  Future<void> submitData(String name, String titular, String duedate,
+      String number, String type, String sucursal) async {
+    String mutation = """
+    mutation {
+      postMethod(
+        user: "9746498",
+        duedate: "$duedate",
+        number: "$number",
+        sucursal: "$sucursal",
+        type: "$type",
+        titular: "$titular",
+        name: "$name",
+      ) {
+        ok
+        response{
+            id 
+            status
+        }
+      }
+    }
+  """;
+    print(mutation);
+    final response = await Dio().post(
+      "https://chaza-wallet-ag-ithgocyoua-uc.a.run.app/graphql",
+      data: {"query": mutation},
+    );
+    print(response);
   }
 
   @override
@@ -81,7 +117,7 @@ class _FormRechargesState extends State<FormRecharges> {
             DropdownButtonFormField<String>(
               value: dropdownValue,
               hint: const Text('Selecciona tu metodo de recarga'),
-              items: methods?.data
+              items: methods?.data?.getMethods
                       ?.map((e) => DropdownMenuItem<String>(
                           value: e.id, child: Text(e.name.toString())))
                       .toList() ??

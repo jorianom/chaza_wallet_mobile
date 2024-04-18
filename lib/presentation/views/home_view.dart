@@ -1,6 +1,13 @@
+import 'dart:convert';
+
+import 'package:chaza_wallet/infraestructure/models/recharges_response.dart';
+import 'package:chaza_wallet/infraestructure/models/transactions.dart';
 import 'package:chaza_wallet/presentation/screens/recharges_screen.dart';
 import 'package:chaza_wallet/presentation/screens/send_screen.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 
 class HomeView extends StatelessWidget {
   const HomeView({super.key});
@@ -143,52 +150,130 @@ class Title extends StatelessWidget {
   }
 }
 
-class ListTransactions extends StatelessWidget {
+class ListTransactions extends StatefulWidget {
   const ListTransactions({
     super.key,
   });
 
   @override
+  State<ListTransactions> createState() => _ListTransactionsState();
+}
+
+class _ListTransactionsState extends State<ListTransactions> {
+  ResponseRecharges? recharges;
+  GetTransactions? transactions;
+
+  @override
+  void initState() {
+    super.initState();
+    // getRecharge();
+    getTransactions();
+  }
+
+  Future<void> getTransactions() async {
+    // final response = await Dio().post("http://10.0.2.2:8000/graphql", data: {
+    //   'query': '''
+    //         {
+    //             getTransactions {
+    //                 transactionId
+    //                 amount
+    //                 dateTime
+    //                 description
+    //                 senderId
+    //                 receiverId
+    //             }
+    //         }
+    //       '''
+    // });
+
+    var url = Uri.parse("http://10.0.2.2:8000/graphql");
+    var response = await http.post(url, body: {
+      'query': '''
+            {
+                getTransactionsForUser(id: 1) {
+                    transactionId
+                    amount
+                    dateTime
+                    description
+                    senderId
+                    receiverId
+                }
+            }
+          '''
+    });
+    transactions = GetTransactions.fromJson(jsonDecode(response.body));
+    setState(() {});
+  }
+
+  Future<void> getRecharge() async {
+    final response = await Dio()
+        .post("https://chaza-wallet-ag-ithgocyoua-uc.a.run.app/graphql", data: {
+      'query': '''
+            {
+              getRecharges(id: 9746498) {
+                  id
+                  user
+                  amount
+                  date
+              }
+          }
+          '''
+    });
+    recharges = ResponseRecharges.fromJson(response.data);
+    setState(() {});
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (transactions == null) {
+      return const Text("null");
+    }
     return Expanded(
         child: ListView.builder(
-            itemCount: 10,
+            itemCount: transactions?.data?.getTransactionsForUser?.length,
             itemBuilder: (context, index) {
-              return const Transactions();
+              var transaction =
+                  transactions?.data?.getTransactionsForUser?[index];
+              return Transactions(transaction);
             }));
   }
 }
 
 class Transactions extends StatelessWidget {
-  const Transactions({
+  final GetTransactionsForUser? transaction;
+  const Transactions(
+    this.transaction, {
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.all(8.0),
+    // String fechaString = transaction?.dateTime;
+    DateTime? fecha = transaction!.dateTime;
+    String formateado = DateFormat('yyyy-MM-dd').format(fecha!);
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
       child: ListTile(
-        leading: Icon(Icons.paid),
+        leading: const Icon(Icons.paid),
         title: Text(
-          'Netflix',
-          style: TextStyle(
+          formateado,
+          style: const TextStyle(
               fontWeight: FontWeight.w800,
               color: Colors.black,
               fontSize: 16,
               letterSpacing: 1),
         ),
         subtitle: Text(
-          'Subscription',
-          style: TextStyle(
+          'Subscription${transaction?.description}',
+          style: const TextStyle(
               fontWeight: FontWeight.w500,
               color: Colors.black,
               fontSize: 16,
               letterSpacing: 1),
         ),
         trailing: Text(
-          '-\$10.99',
-          style: TextStyle(
+          '\$${transaction?.amount}',
+          style: const TextStyle(
               fontWeight: FontWeight.w800,
               color: Colors.black,
               fontSize: 16,

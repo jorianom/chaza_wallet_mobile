@@ -1,3 +1,6 @@
+import 'package:chaza_wallet/infraestructure/models/methods_response.dart';
+import 'package:chaza_wallet/presentation/screens/recharges_screen.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -28,10 +31,58 @@ class FormMethods extends StatefulWidget {
 }
 
 class _FormMethodsState extends State<FormMethods> {
+  ResponseMethods? responseMethods;
+  String? dropdownValue;
+  String? dropdownValueType = "Credito";
+  final _formKey = GlobalKey<FormState>();
+  TextEditingController nameController = TextEditingController();
+  TextEditingController titularController = TextEditingController();
+  TextEditingController duedateController = TextEditingController();
+  TextEditingController numberController = TextEditingController();
+  TextEditingController typeController = TextEditingController();
+  TextEditingController sucursalController = TextEditingController();
+
+  Future<void> submitData(String name, String titular, String duedate,
+      String number, String type, String sucursal) async {
+    String mutation = """
+    mutation {
+      postMethod(
+        user: "9746498",
+        duedate: "$duedate",
+        number: "$number",
+        sucursal: "$sucursal",
+        type: "$type",
+        titular: "$titular",
+        name: "$name",
+      ) {
+        ok
+        response{
+            id 
+            status
+        }
+      }
+    }
+  """;
+    print(mutation);
+    final response = await Dio().post(
+      "https://chaza-wallet-ag-ithgocyoua-uc.a.run.app/graphql",
+      data: {"query": mutation},
+    );
+    responseMethods = ResponseMethods.fromJson(response.data);
+    // print(methods?.message);
+    setState(() {});
+    if (responseMethods?.data?.postMethod?.response?.status == 202) {
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (BuildContext contex) => const RechargesScreen()));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    String? dropdownValue;
     return Form(
+      key: _formKey,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 50),
         child: Column(
@@ -41,47 +92,52 @@ class _FormMethodsState extends State<FormMethods> {
             // Text(methods?.status.toString() ?? "null"),
             const SizedBox(height: 15),
             TextFormField(
+              controller: nameController,
               textAlign: TextAlign.center,
               keyboardType: TextInputType.text,
-              // inputFormatters: [
-              //   FilteringTextInputFormatter.allow(
-              //       RegExp(r'[0-9.]')), // Solo permite números del 0 al 9
-              // ],
               decoration:
                   const InputDecoration(labelText: 'Nombre de tu metodo'),
               validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return "Ingresa un valor";
+                }
                 return null;
               },
             ),
             const SizedBox(height: 15),
             TextFormField(
+              controller: titularController,
               textAlign: TextAlign.center,
               keyboardType: TextInputType.text,
-              // inputFormatters: [
-              //   FilteringTextInputFormatter.allow(
-              //       RegExp(r'[0-9.]')), // Solo permite números del 0 al 9
-              // ],
               decoration: const InputDecoration(labelText: 'Nombre titular'),
               validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return "Ingresa un valor";
+                }
                 return null;
               },
             ),
             const SizedBox(height: 15),
             TextFormField(
+              controller: duedateController,
               textAlign: TextAlign.center,
               keyboardType: TextInputType.datetime,
-              // inputFormatters: [
-              //   FilteringTextInputFormatter.allow(
-              //       RegExp(r'[0-9.]')), // Solo permite números del 0 al 9
-              // ],
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(
+                    RegExp(r'[0-9.]')), // Solo permite números del 0 al 9
+              ],
               decoration:
                   const InputDecoration(labelText: 'Fecha de vencimiento'),
               validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return "Ingresa un valor";
+                }
                 return null;
               },
             ),
             const SizedBox(height: 15),
             TextFormField(
+              controller: numberController,
               textAlign: TextAlign.center,
               keyboardType: TextInputType.number,
               inputFormatters: [
@@ -90,20 +146,23 @@ class _FormMethodsState extends State<FormMethods> {
               ],
               decoration: const InputDecoration(labelText: 'Número'),
               validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return "Ingresa un valor";
+                }
                 return null;
               },
             ),
             const SizedBox(height: 15),
             DropdownButtonFormField<String>(
-              value: dropdownValue,
+              value: dropdownValueType,
               hint: const Text('Selecciona un tipo de metodo'),
               items: ["Credito", "Debito"]
                   .map(
                       (e) => DropdownMenuItem<String>(value: e, child: Text(e)))
                   .toList(),
-              onChanged: (String? value) {
+              onChanged: (String? newValue) {
                 setState(() {
-                  dropdownValue = value!;
+                  dropdownValueType = newValue;
                 });
               },
             ),
@@ -126,10 +185,10 @@ class _FormMethodsState extends State<FormMethods> {
               children: [
                 Expanded(
                     child: Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.all(6.0),
                   child: SizedBox(
                     width: double.infinity,
-                    height: 60,
+                    height: 50,
                     child: ElevatedButton(
                       onPressed: () {
                         Navigator.pop(context);
@@ -140,12 +199,22 @@ class _FormMethodsState extends State<FormMethods> {
                 )),
                 Expanded(
                     child: Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.all(6.0),
                   child: SizedBox(
                     width: double.infinity,
-                    height: 60,
+                    height: 50,
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () async {
+                        if (_formKey.currentState!.validate()) {
+                          await submitData(
+                              nameController.text,
+                              titularController.text,
+                              duedateController.text,
+                              numberController.text,
+                              dropdownValueType!,
+                              dropdownValue!);
+                        }
+                      },
                       child: const Text("Guardar"),
                     ),
                   ),

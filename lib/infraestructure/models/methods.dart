@@ -9,75 +9,84 @@ Methods methodsFromJson(String str) => Methods.fromJson(json.decode(str));
 String methodsToJson(Methods data) => json.encode(data.toJson());
 
 class Methods {
-  final String? message;
-  final int? status;
-  final List<Datum>? data;
+  final Data? data;
 
   Methods({
-    this.message,
-    this.status,
     this.data,
   });
 
   factory Methods.fromJson(Map<String, dynamic> json) => Methods(
-        message: json["message"],
-        status: json["status"],
-        data: json["data"] == null
-            ? []
-            : List<Datum>.from(json["data"]!.map((x) => Datum.fromJson(x))),
+        data: json["data"] == null ? null : Data.fromJson(json["data"]),
       );
 
   Map<String, dynamic> toJson() => {
-        "message": message,
-        "status": status,
-        "data": data == null
-            ? []
-            : List<dynamic>.from(data!.map((x) => x.toJson())),
+        "data": data?.toJson(),
       };
 }
 
-class Datum {
-  final String? id;
-  final String? user;
-  final String? name;
-  final String? titular;
-  final DateTime? duedate;
-  final String? number;
-  final String? type;
-  final String? sucursal;
+class Data {
+  final List<GetMethod>? getMethods;
 
-  Datum({
-    this.id,
-    this.user,
-    this.name,
-    this.titular,
-    this.duedate,
-    this.number,
-    this.type,
-    this.sucursal,
+  Data({
+    this.getMethods,
   });
 
-  factory Datum.fromJson(Map<String, dynamic> json) => Datum(
+  factory Data.fromJson(Map<String, dynamic> json) => Data(
+        getMethods: json["getMethods"] == null
+            ? []
+            : List<GetMethod>.from(
+                json["getMethods"]!.map((x) => GetMethod.fromJson(x))),
+      );
+
+  Map<String, dynamic> toJson() => {
+        "getMethods": getMethods == null
+            ? []
+            : List<dynamic>.from(getMethods!.map((x) => x.toJson())),
+      };
+}
+
+class GetMethod {
+  final String? id;
+  final String? user;
+  final String? number;
+  final String? sucursal;
+  final String? type;
+  final String? titular;
+  final String? name;
+  final DateTime? duedate;
+
+  GetMethod({
+    this.id,
+    this.user,
+    this.number,
+    this.sucursal,
+    this.type,
+    this.titular,
+    this.name,
+    this.duedate,
+  });
+
+  factory GetMethod.fromJson(Map<String, dynamic> json) => GetMethod(
         id: json["id"],
         user: json["user"],
-        name: json["name"],
+        number: json["number"],
+        sucursal: json["sucursal"],
+        type: json["type"],
         titular: json["titular"],
+        name: json["name"],
         duedate:
             json["duedate"] == null ? null : DateTime.parse(json["duedate"]),
-        number: json["number"],
-        type: json["type"],
-        sucursal: json["sucursal"],
       );
 
   Map<String, dynamic> toJson() => {
         "id": id,
         "user": user,
-        "name": name,
+        "number": number,
+        "sucursal": sucursal,
+        "type": type,
         "titular": titular,
+        "name": name,
         "duedate":
             "${duedate!.year.toString().padLeft(4, '0')}-${duedate!.month.toString().padLeft(2, '0')}-${duedate!.day.toString().padLeft(2, '0')}",
-        "number": number,
-        "type": type,
-        "sucursal": sucursal,
       };
 }
