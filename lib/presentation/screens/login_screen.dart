@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:chaza_wallet/infraestructure/errors_auth.dart';
+import 'package:chaza_wallet/infraestructure/models/errors_auth.dart';
 import 'package:chaza_wallet/infraestructure/models/response_auth.dart';
 import 'package:chaza_wallet/presentation/screens/home_screen.dart';
 import 'package:http/http.dart' as http;
