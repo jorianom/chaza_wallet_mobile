@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:chaza_wallet/infraestructure/models/methods.dart';
 import 'package:chaza_wallet/presentation/screens/methods_screen.dart';
 import 'package:dio/dio.dart';

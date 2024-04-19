@@ -1,3 +1,9 @@
+import 'dart:convert';
+
+import 'package:chaza_wallet/infraestructure/errors_auth.dart';
+import 'package:chaza_wallet/infraestructure/models/response_auth.dart';
+import 'package:chaza_wallet/presentation/screens/home_screen.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 
 class LoginForm extends StatefulWidget {
@@ -8,10 +14,6 @@ class LoginForm extends StatefulWidget {
 }
 
 class _LoginFormState extends State<LoginForm> {
-  final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController();
-  final _passwordController = TextEditingController();
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -22,10 +24,7 @@ class _LoginFormState extends State<LoginForm> {
         ),
         backgroundColor: Colors.blue,
       ),
-      body: FormLogin(
-          formKey: _formKey,
-          usernameController: _usernameController,
-          passwordController: _passwordController),
+      body: const FormLogin(),
     );
   }
 }
@@ -33,29 +32,57 @@ class _LoginFormState extends State<LoginForm> {
 class FormLogin extends StatefulWidget {
   const FormLogin({
     super.key,
-    required GlobalKey<FormState> formKey,
-    required TextEditingController usernameController,
-    required TextEditingController passwordController,
-  })  : _formKey = formKey,
-        _usernameController = usernameController,
-        _passwordController = passwordController;
-
-  final GlobalKey<FormState> _formKey;
-  final TextEditingController _usernameController;
-  final TextEditingController _passwordController;
+  });
 
   @override
   State<FormLogin> createState() => _FormLoginState();
 }
 
 class _FormLoginState extends State<FormLogin> {
+  final _formKey = GlobalKey<FormState>();
+  TextEditingController userController = TextEditingController();
+  TextEditingController passController = TextEditingController();
   bool obs = true;
   bool value = false;
+  AuthenticateUserAuth? auth;
+  ErrorsAuth? authErr;
+  String error = "";
+
+  Future<void> submitData(String user, String pass) async {
+    var url = Uri.parse("http://10.0.2.2:8000/graphql");
+    var response = await http.post(url, body: {
+      'query': '''
+            mutation {
+            authenticateUserAuth(
+                username: "$user"
+                password: "$pass"
+            ) {
+                ok
+                token
+            }
+        }
+          '''
+    });
+    auth = AuthenticateUserAuth.fromJson(jsonDecode(response.body));
+    // transactions = GetTransactions.fromJson(jsonDecode(response.body));
+    setState(() {});
+    if (auth?.data!.authenticateUserAuth?.token != null) {
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (BuildContext contex) => const HomeScreen()));
+    } else {
+      authErr = ErrorsAuth.fromJson(jsonDecode(response.body));
+      setState(() {
+        error = authErr!.errors![0].message!;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Form(
-      key: widget._formKey,
+      key: _formKey,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 50),
         child: Column(
@@ -75,16 +102,35 @@ class _FormLoginState extends State<FormLogin> {
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 30),
             ),
             const SizedBox(height: 15),
+            error != ""
+                ? Text(
+                    'Error: $error',
+                    style: const TextStyle(
+                      color: Colors.red,
+                      fontSize: 16.0,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  )
+                : Container(),
             TextFormField(
-              controller: widget._usernameController,
+              controller: userController,
               decoration: const InputDecoration(labelText: 'Usuario'),
               validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return "Ingresa un valor";
+                }
                 return null;
               },
             ),
             TextFormField(
               obscureText: obs,
-              controller: widget._passwordController,
+              controller: passController,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return "Ingresa un valor";
+                }
+                return null;
+              },
               decoration: InputDecoration(
                   labelText: 'Contraseña',
                   suffixIcon: IconButton(
@@ -111,7 +157,11 @@ class _FormLoginState extends State<FormLogin> {
               width: double.infinity,
               height: 60,
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () async {
+                  if (_formKey.currentState!.validate()) {
+                    await submitData(userController.text, passController.text);
+                  }
+                },
                 child: const Text("Inciar Sesión"),
               ),
             )
