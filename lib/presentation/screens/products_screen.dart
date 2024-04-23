@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:dio/dio.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
 
 class ProductScreen extends StatelessWidget {
   const ProductScreen({super.key});
@@ -39,7 +40,7 @@ class _FormProductState extends State<FormProduct> {
   TextEditingController installmentsController = TextEditingController();
   TextEditingController datetimeController = TextEditingController();
 
-
+/*
   Future<void> submitData(String amount, String datetime,
       String installments) async {
     DateTime ahora = DateTime.now().toUtc();
@@ -77,11 +78,20 @@ class _FormProductState extends State<FormProduct> {
      //);
      //print(response);
   }
+*/
 
-  /*
   Future<void> submitData(String amount, String datetime,
       String installments) async {
-    var url = Uri.parse("http://127.0.0.1:8000/graphql");
+    var url = Uri.parse("http://10.0.2.2:8000/graphql");
+
+    if (kIsWeb) {
+      // Some web specific code there
+      url = Uri.parse("http://127.0.0.1:8000/graphql");
+    } else {
+      // Some android/ios specific code
+      url = Uri.parse("http://10.0.2.2:8000/graphql");
+    }
+
     var response = await http.post(url, body: {
         'query': '''
               mutation {
@@ -114,7 +124,7 @@ class _FormProductState extends State<FormProduct> {
 
 
   }
-*/
+
   @override
   Widget build(BuildContext context) {
     return Form(
