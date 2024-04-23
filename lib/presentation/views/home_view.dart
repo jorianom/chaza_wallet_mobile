@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:chaza_wallet/infraestructure/models/recharges_response.dart';
 import 'package:chaza_wallet/infraestructure/models/transactions.dart';
+import 'package:chaza_wallet/presentation/screens/products_screen.dart';
 import 'package:chaza_wallet/presentation/screens/recharges_screen.dart';
 import 'package:chaza_wallet/presentation/screens/send_screen.dart';
 import 'package:dio/dio.dart';
@@ -112,7 +113,11 @@ class Buttons extends StatelessWidget {
                 color: Colors.blueAccent,
                 icon: const Icon(Icons.credit_score, size: 40),
                 onPressed: () {
-                  // print('Retiro presionado');
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (BuildContext contex) =>
+                          const ProductScreen()));
                 },
               ),
               const Text('Productos'),
