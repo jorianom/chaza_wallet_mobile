@@ -5,6 +5,7 @@ import 'package:chaza_wallet/infraestructure/models/transactions.dart';
 import 'package:chaza_wallet/presentation/screens/recharges_screen.dart';
 import 'package:chaza_wallet/presentation/screens/send_screen.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
@@ -186,7 +187,15 @@ class _ListTransactionsState extends State<ListTransactions> {
     //       '''
     // });
 
-    var url = Uri.parse("http://10.0.2.2:8000/graphql");
+    Uri url;
+
+    if (kIsWeb) {
+      // Some web specific code there
+      url = Uri.parse("http://127.0.0.1:8000/graphql");
+    } else {
+      // Some android/ios specific code
+      url = Uri.parse("http://10.0.2.2:8000/graphql");
+    }
     var response = await http.post(url, body: {
       'query': '''
             {
@@ -206,8 +215,7 @@ class _ListTransactionsState extends State<ListTransactions> {
   }
 
   Future<void> getRecharge() async {
-    final response = await Dio()
-        .post("https://chaza-wallet-ag-ithgocyoua-uc.a.run.app/graphql", data: {
+    final response = await Dio().post("http://127.0.0.1:8000/graphql", data: {
       'query': '''
             {
               getRecharges(id: 9746498) {

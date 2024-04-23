@@ -1,8 +1,12 @@
 import 'package:chaza_wallet/infraestructure/models/methods.dart';
+import 'package:chaza_wallet/infraestructure/models/post_recharges.dart';
+import 'package:chaza_wallet/presentation/screens/home_screen.dart';
 import 'package:chaza_wallet/presentation/screens/methods_screen.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
 const List<String> list = <String>['One', 'Two', 'Three', 'Four'];
 
@@ -35,6 +39,15 @@ class FormRecharges extends StatefulWidget {
 
 class _FormRechargesState extends State<FormRecharges> {
   Methods? methods;
+  PostRecharge? recharge;
+  final _formKey = GlobalKey<FormState>();
+  String? dropdownValue;
+  String error = "";
+  String message = "";
+  TextEditingController userController = TextEditingController();
+  TextEditingController amountController = TextEditingController();
+  TextEditingController dateController = TextEditingController();
+  TextEditingController methodController = TextEditingController();
 
   @override
   void initState() {
@@ -43,8 +56,7 @@ class _FormRechargesState extends State<FormRecharges> {
   }
 
   Future<void> getMethods() async {
-    final response = await Dio()
-        .post("https://chaza-wallet-ag-ithgocyoua-uc.a.run.app/graphql", data: {
+    final response = await Dio().post("http://127.0.0.1:8000/graphql", data: {
       'query': '''
             {
                 getMethods(id: 9746498) {
@@ -58,39 +70,69 @@ class _FormRechargesState extends State<FormRecharges> {
     setState(() {});
   }
 
-  Future<void> submitData(String name, String titular, String duedate,
-      String number, String type, String sucursal) async {
+  Future<void> submitData(
+      String user, String amount, String method, String date) async {
+    String url;
+    DateTime ahora = DateTime.now().toUtc();
+    String formateado =
+        DateFormat('yyyy-MM-dd\'T\'HH:mm:ss\'Z\'').format(ahora);
     String mutation = """
     mutation {
-      postMethod(
+      postRecharge(
         user: "9746498",
-        duedate: "$duedate",
-        number: "$number",
-        sucursal: "$sucursal",
-        type: "$type",
-        titular: "$titular",
-        name: "$name",
+        amount: "$amount",
+        method: "$method"
+        date: "$formateado",
       ) {
         ok
         response{
-            id 
-            status
+          message
         }
       }
     }
   """;
-    print(mutation);
+    //https://chaza-wallet-ag-ithgocyoua-uc.a.run.app/graphql
+    // print(mutation);
+
+    if (kIsWeb) {
+      // Some web specific code there
+      url = "http://127.0.0.1:8000/graphql";
+    } else {
+      // Some android/ios specific code
+      url = "http://10.0.2.2:8000/graphql";
+    }
     final response = await Dio().post(
-      "https://chaza-wallet-ag-ithgocyoua-uc.a.run.app/graphql",
+      url,
       data: {"query": mutation},
     );
-    print(response);
+    recharge = PostRecharge.fromJson(response.data);
+    // print(recharge?.data?.postRecharge?.ok);
+    if (recharge != null) {
+      if (recharge?.data?.postRecharge!.ok == true) {
+        message = "Tu recarga esta en proceso ...";
+      } else {
+        error = "Tu recarga esta en proceso ...";
+      }
+    } else {
+      error = "Tu recarga esta en proceso ...";
+    }
+    setState(() {});
+    Future.delayed(const Duration(seconds: 3), () {
+      error = "";
+      message = "";
+      setState(() {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (BuildContext contex) => const HomeScreen()));
+      });
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    String? dropdownValue;
     return Form(
+      key: _formKey,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 50),
         child: Column(
@@ -99,7 +141,28 @@ class _FormRechargesState extends State<FormRecharges> {
           children: [
             // Text(methods?.status.toString() ?? "null"),
             const SizedBox(height: 15),
+            error != ""
+                ? Text(
+                    'Error: $error',
+                    style: const TextStyle(
+                      color: Colors.red,
+                      fontSize: 16.0,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  )
+                : Container(),
+            message != ""
+                ? Text(
+                    message,
+                    style: const TextStyle(
+                      color: Colors.green,
+                      fontSize: 16.0,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  )
+                : Container(),
             TextFormField(
+              controller: amountController,
               textAlign: TextAlign.center,
               keyboardType: TextInputType.number,
               inputFormatters: [
@@ -108,6 +171,9 @@ class _FormRechargesState extends State<FormRecharges> {
               ],
               decoration: const InputDecoration(labelText: '¿Cantidad?'),
               validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return "Ingresa un valor";
+                }
                 return null;
               },
             ),
@@ -145,7 +211,20 @@ class _FormRechargesState extends State<FormRecharges> {
               width: double.infinity,
               height: 60,
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () async {
+                  if (dropdownValue == null) {
+                    error = "Selecciona un metodo de recarga";
+                    setState(() {});
+                    Future.delayed(const Duration(seconds: 3), () {
+                      error = "";
+                      setState(() {});
+                    });
+                  }
+                  if (_formKey.currentState!.validate()) {
+                    await submitData(userController.text, amountController.text,
+                        dropdownValue!, dateController.text);
+                  }
+                },
                 child: const Text("Recargar"),
               ),
             )

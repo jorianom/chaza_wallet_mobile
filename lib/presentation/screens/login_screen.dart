@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 
 import 'package:chaza_wallet/infraestructure/models/errors_auth.dart';
 import 'package:chaza_wallet/infraestructure/models/response_auth.dart';
@@ -49,7 +51,21 @@ class _FormLoginState extends State<FormLogin> {
   String error = "";
 
   Future<void> submitData(String user, String pass) async {
-    var url = Uri.parse("http://10.0.2.2:8000/graphql");
+    Uri url;
+
+    if (kIsWeb) {
+      // Some web specific code there
+      url = Uri.parse("http://127.0.0.1:8000/graphql");
+    } else {
+      // Some android/ios specific code
+      url = Uri.parse("http://10.0.2.2:8000/graphql");
+    }
+    // }
+    // if (Platform.isAndroid) {
+    //   url = Uri.parse("http://10.0.2.2:8000/graphql");
+    // } else {
+    //   url = Uri.parse("http://127.0.0.1:8000/graphql");
+    // }
     var response = await http.post(url, body: {
       'query': '''
             mutation {
@@ -98,7 +114,7 @@ class _FormLoginState extends State<FormLogin> {
                   height: 200,
                 )),
             const Text(
-              "Bienvenido a Chaza Wallet",
+              "Bienvenido a Chaza Wallets",
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 30),
             ),
             const SizedBox(height: 15),
