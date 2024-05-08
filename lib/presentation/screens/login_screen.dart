@@ -1,5 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:chaza_wallet/infraestructure/models/auth_model.dart';
+import 'package:chaza_wallet/presentation/other/dio_client.dart';
+import 'package:chaza_wallet/presentation/screens/register_screen.dart';
+import 'package:dio/io.dart';
+import 'package:dio/src/adapter.dart';
 import 'package:flutter/foundation.dart';
 
 import 'package:chaza_wallet/infraestructure/models/errors_auth.dart';
@@ -7,6 +12,7 @@ import 'package:chaza_wallet/infraestructure/models/response_auth.dart';
 import 'package:chaza_wallet/presentation/screens/home_screen.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
@@ -50,24 +56,16 @@ class _FormLoginState extends State<FormLogin> {
   ErrorsAuth? authErr;
   String error = "";
 
-  Future<void> submitData(String user, String pass) async {
-    Uri url;
-
-    if (kIsWeb) {
-      // Some web specific code there
-      url = Uri.parse("http://127.0.0.1:8000/graphql");
-    } else {
-      // Some android/ios specific code
-      url = Uri.parse("http://10.0.2.2:8000/graphql");
-    }
-    // }
-    // if (Platform.isAndroid) {
-    //   url = Uri.parse("http://10.0.2.2:8000/graphql");
-    // } else {
-    //   url = Uri.parse("http://127.0.0.1:8000/graphql");
-    // }
-    var response = await http.post(url, body: {
-      'query': '''
+  Future<String?> submitData(String user, String pass) async {
+    try {
+      String url;
+      if (kIsWeb) {
+        url = "https://localhost:82/graphql";
+      } else {
+        url = "http://10.0.2.2:81/graphql";
+      }
+      var response = await DioClient.instance.post(url, data: {
+        'query': '''
             mutation {
             authenticateUserAuth(
                 username: "$user"
@@ -78,25 +76,34 @@ class _FormLoginState extends State<FormLogin> {
             }
         }
           '''
-    });
-    auth = AuthenticateUserAuth.fromJson(jsonDecode(response.body));
-    // transactions = GetTransactions.fromJson(jsonDecode(response.body));
-    setState(() {});
-    if (auth?.data!.authenticateUserAuth?.token != null) {
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (BuildContext contex) => const HomeScreen()));
-    } else {
-      authErr = ErrorsAuth.fromJson(jsonDecode(response.body));
-      setState(() {
-        error = authErr!.errors![0].message!;
       });
+      print(response.data);
+      // print(response);
+      auth = AuthenticateUserAuth.fromJson((response.data));
+      setState(() {});
+
+      if (auth?.data!.authenticateUserAuth?.token != null) {
+        // authModel.login(auth?.data!.authenticateUserAuth?.token);
+        return auth?.data!.authenticateUserAuth?.token;
+      } else {
+        authErr = ErrorsAuth.fromJson((response.data));
+        setState(() {
+          error = authErr!.errors![0].message!;
+        });
+        return "";
+      }
+    } catch (e) {
+      print('Something really unknown: $e');
+      setState(() {
+        error = 'Something really unknown: $e';
+      });
+      return "";
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final AuthModel authModel = Provider.of<AuthModel>(context);
     return Form(
       key: _formKey,
       child: Padding(
@@ -114,7 +121,7 @@ class _FormLoginState extends State<FormLogin> {
                   height: 200,
                 )),
             const Text(
-              "Bienvenido a Chaza Wallets",
+              "Bienvenido a Chaza Wallet",
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 30),
             ),
             const SizedBox(height: 15),
@@ -161,7 +168,13 @@ class _FormLoginState extends State<FormLogin> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (BuildContext contex) =>
+                                  const RegisterForm()));
+                    },
                     child: const Text("¿Aun no tienes cuenta?")),
                 TextButton(
                     onPressed: () {},
@@ -175,7 +188,17 @@ class _FormLoginState extends State<FormLogin> {
               child: ElevatedButton(
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
-                    await submitData(userController.text, passController.text);
+                    String? token = await submitData(
+                        userController.text, passController.text);
+                    if (token != "") {
+                      DioClient().setToken(token!);
+                      authModel.login(token);
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (BuildContext contex) =>
+                                  const HomeScreen()));
+                    }
                   }
                 },
                 child: const Text("Inciar Sesión"),

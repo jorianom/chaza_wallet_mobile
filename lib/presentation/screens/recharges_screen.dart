@@ -1,5 +1,7 @@
+import 'package:chaza_wallet/infraestructure/models/auth_model.dart';
 import 'package:chaza_wallet/infraestructure/models/methods.dart';
 import 'package:chaza_wallet/infraestructure/models/post_recharges.dart';
+import 'package:chaza_wallet/presentation/other/dio_client.dart';
 import 'package:chaza_wallet/presentation/screens/home_screen.dart';
 import 'package:chaza_wallet/presentation/screens/methods_screen.dart';
 import 'package:dio/dio.dart';
@@ -7,14 +9,17 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
-const List<String> list = <String>['One', 'Two', 'Three', 'Four'];
+String idUser = "";
 
 class RechargesScreen extends StatelessWidget {
   const RechargesScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final AuthModel authModel = Provider.of<AuthModel>(context);
+    idUser = authModel.userId;
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -56,18 +61,35 @@ class _FormRechargesState extends State<FormRecharges> {
   }
 
   Future<void> getMethods() async {
-    final response = await Dio().post("http://127.0.0.1:8000/graphql", data: {
+    String url;
+    // print(authModel.token);
+    if (kIsWeb) {
+      // Some web specific code there
+      url = "https://localhost:82/graphql";
+    } else {
+      // Some android/ios specific code
+      url = "http://10.0.2.2:81/graphql";
+    }
+    final response = await DioClient.instance.post(url, data: {
       'query': '''
             {
-                getMethods(id: 9746498) {
+                getMethods(id: $idUser) {
                     id
                     name
                 }
             }
           '''
     });
+    print(response);
     methods = Methods.fromJson(response.data);
-    setState(() {});
+    if (methods!.data!.getMethods!.isEmpty) {
+      Future.delayed(const Duration(seconds: 2), () {
+        error = "Ups no tienes un metodo de recarga, crea uno ...";
+        setState(() {});
+      });
+    } else {
+      setState(() {});
+    }
   }
 
   Future<void> submitData(
@@ -79,29 +101,24 @@ class _FormRechargesState extends State<FormRecharges> {
     String mutation = """
     mutation {
       postRecharge(
-        user: "9746498",
+        user: "$idUser",
         amount: "$amount",
         method: "$method"
         date: "$formateado",
       ) {
         ok
-        response{
-          message
-        }
       }
     }
   """;
-    //https://chaza-wallet-ag-ithgocyoua-uc.a.run.app/graphql
-    // print(mutation);
-
+    print(mutation);
     if (kIsWeb) {
       // Some web specific code there
-      url = "http://127.0.0.1:8000/graphql";
+      url = "https://localhost:82/graphql";
     } else {
       // Some android/ios specific code
-      url = "http://10.0.2.2:8000/graphql";
+      url = "http://10.0.2.2:81/graphql";
     }
-    final response = await Dio().post(
+    final response = await DioClient.instance.post(
       url,
       data: {"query": mutation},
     );
@@ -131,6 +148,7 @@ class _FormRechargesState extends State<FormRecharges> {
 
   @override
   Widget build(BuildContext context) {
+    // final authModel = Provider.of<AuthModel>(context);
     return Form(
       key: _formKey,
       child: Padding(
@@ -143,7 +161,7 @@ class _FormRechargesState extends State<FormRecharges> {
             const SizedBox(height: 15),
             error != ""
                 ? Text(
-                    'Error: $error',
+                    error,
                     style: const TextStyle(
                       color: Colors.red,
                       fontSize: 16.0,

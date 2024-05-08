@@ -1,16 +1,22 @@
+import 'package:chaza_wallet/infraestructure/models/auth_model.dart';
 import 'package:chaza_wallet/infraestructure/models/methods_response.dart';
-import 'package:chaza_wallet/presentation/screens/home_screen.dart';
+import 'package:chaza_wallet/presentation/other/dio_client.dart';
 import 'package:chaza_wallet/presentation/screens/recharges_screen.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+
+String idUser = "";
 
 class MethodsScreen extends StatelessWidget {
   const MethodsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final AuthModel authModel = Provider.of<AuthModel>(context);
+    idUser = authModel.userId;
     return Scaffold(
         appBar: AppBar(
           title: const Text(
@@ -51,7 +57,7 @@ class _FormMethodsState extends State<FormMethods> {
     String mutation = """
     mutation {
       postMethod(
-        user: "9746498",
+        user: "$idUser",
         duedate: "$duedate",
         number: "$number",
         sucursal: "$sucursal",
@@ -67,20 +73,18 @@ class _FormMethodsState extends State<FormMethods> {
       }
     }
   """;
-    //https://chaza-wallet-ag-ithgocyoua-uc.a.run.app/graphql
-    // print(mutation);
-
     if (kIsWeb) {
       // Some web specific code there
-      url = "http://127.0.0.1:8000/graphql";
+      url = "https://localhost:82/graphql";
     } else {
       // Some android/ios specific code
-      url = "http://10.0.2.2:8000/graphql";
+      url = "http://10.0.2.2:81/graphql";
     }
-    final response = await Dio().post(
+    final response = await DioClient.instance.post(
       url,
       data: {"query": mutation},
     );
+    print(response);
     responseMethods = ResponseMethods.fromJson(response.data);
     // print(methods?.message);
     setState(() {});
