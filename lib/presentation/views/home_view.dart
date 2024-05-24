@@ -179,7 +179,7 @@ class Buttons extends StatelessWidget {
 Future<void> getTransactions(authModel) async {
   String url;
   if (kIsWeb) {
-    url = "https://localhost:82/graphql";
+    url = "https://35.238.88.129:82/graphql";
   } else {
     url = "http://10.0.2.2:81/graphql";
   }
@@ -205,7 +205,7 @@ Future<void> getTransactions(authModel) async {
 Future<void> getBalance(balance, authModel) async {
   String url;
   if (kIsWeb) {
-    url = "https://localhost:82/graphql";
+    url = "https://35.238.88.129:82/graphql";
   } else {
     url = "http://10.0.2.2:81/graphql";
   }
@@ -225,7 +225,7 @@ Future<void> getBalance(balance, authModel) async {
 Future<void> getRecharge(authModel) async {
   String url;
   if (kIsWeb) {
-    url = "https://localhost:82/graphql";
+    url = "https://35.238.88.129:82/graphql";
   } else {
     url = "http://10.0.2.2:81/graphql";
   }

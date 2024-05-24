@@ -75,7 +75,7 @@ class _FormMethodsState extends State<FormMethods> {
   """;
     if (kIsWeb) {
       // Some web specific code there
-      url = "https://localhost:82/graphql";
+      url = "https://35.238.88.129:82/graphql";
     } else {
       // Some android/ios specific code
       url = "http://10.0.2.2:81/graphql";
